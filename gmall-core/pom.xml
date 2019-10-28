@@ -30,6 +30,8 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
             <version>${nacos.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+
 
         <dependency>
             <groupId>com.baomidou</groupId>
