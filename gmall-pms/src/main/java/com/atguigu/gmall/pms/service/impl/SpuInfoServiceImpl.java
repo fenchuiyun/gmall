@@ -7,9 +7,7 @@ import com.atguigu.gmall.pms.dao.SpuInfoDescDao;
 import com.atguigu.gmall.pms.dto.SkuSaleDTO;
 import com.atguigu.gmall.pms.entity.*;
 import com.atguigu.gmall.pms.feign.SkuSaleFeign;
-import com.atguigu.gmall.pms.service.ProductAttrValueService;
-import com.atguigu.gmall.pms.service.SkuImagesService;
-import com.atguigu.gmall.pms.service.SkuSaleAttrValueService;
+import com.atguigu.gmall.pms.service.*;
 import com.atguigu.gmall.pms.vo.ProductAttrValueVO;
 import com.atguigu.gmall.pms.vo.SkuInfoVO;
 import com.atguigu.gmall.pms.vo.SpuInfoVO;
@@ -17,10 +15,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -31,7 +33,7 @@ import com.atguigu.core.bean.Query;
 import com.atguigu.core.bean.QueryCondition;
 
 import com.atguigu.gmall.pms.dao.SpuInfoDao;
-import com.atguigu.gmall.pms.service.SpuInfoService;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
@@ -83,42 +85,35 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
     @Autowired
     private SkuSaleFeign skuSaleFeign;
 
-    @Transactional
+    @Autowired
+    private SpuInfoDescService spuInfoDescService;
+
+    @Transactional(rollbackFor = FileNotFoundException.class,noRollbackFor = ArithmeticException.class,timeout = 3)
     @Override
-    public void saveSpuInfoVO(SpuInfoVO spuInfoVO) {
+    public void saveSpuInfoVO(SpuInfoVO spuInfoVO) throws FileNotFoundException, InterruptedException {
         //1.保存spu相关
         //1.1.保存spu基本信息 spu_info
-        spuInfoVO.setPublishStatus(1);//默认是上架
-        spuInfoVO.setCreateTime(new Date());
-        spuInfoVO.setUodateTime(spuInfoVO.getCreateTime());
-        this.save(spuInfoVO);
-        Long spuId = spuInfoVO.getId();//获取新增后的spuId
+        Long spuId = saveSpuInfo(spuInfoVO);
 
         //1.2. 保存spu的描述信息 spu_info_desc
-        SpuInfoDescEntity spuInfoDescEntity = new SpuInfoDescEntity();
-        //注意:spu_info_desc表的主键是spu_id，需要在实体类中配置不是自增主键
-        spuInfoDescEntity.setSpuId(spuId);
-        //把商品的描述，保存到spu详情中，图片地址以逗号进行分割spuImagesgetSupImages
-        spuInfoDescEntity.setDecript(StringUtils.join(spuInfoVO.getSpuImages(),","));
-        this.spuInfoDescDao.insert(spuInfoDescEntity);
-
+        //saveSpuDesc(spuInfoVO, spuId);
+        spuInfoDescService.saveSpuDesc(spuInfoVO, spuId);
+        TimeUnit.SECONDS.sleep(4);
+        //int i = 1/0;
+        new FileInputStream(new File("xxx"));
         //1.3. 保存spu的规格参数信息
-        List<ProductAttrValueVO> baseAttrs = spuInfoVO.getBaseAttrs();
-        if (!CollectionUtils.isEmpty(baseAttrs)) {
-            List<ProductAttrValueEntity> collect = baseAttrs.stream().map(productAttrValueVO -> {
-                productAttrValueVO.setSpuId(spuId);
-                productAttrValueVO.setAttrSort(0);
-                productAttrValueVO.setQuickShow(0);
-                return productAttrValueVO;
-            }).collect(Collectors.toList());
-            this.productAttrValueService.saveBatch(collect);
-        }
+        saveBaseAttr(spuInfoVO, spuId);
 
         //2.保存sku相关信息
+        saveSku(spuInfoVO, spuId);
+    }
+
+    public void saveSku(SpuInfoVO spuInfoVO, Long spuId) {
         List<SkuInfoVO> skuInfoVOs = spuInfoVO.getSkus();
         if (CollectionUtils.isEmpty(skuInfoVOs)) {
             return;
         }
+
         skuInfoVOs.forEach(skuInfoVO -> {
             //2.1.保存sku基本信息
             SkuInfoEntity skuInfoEntity = new SkuInfoEntity();
@@ -176,6 +171,28 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
             //3.3.数量折扣
 
         });
+    }
+
+    public void saveBaseAttr(SpuInfoVO spuInfoVO, Long spuId) {
+        List<ProductAttrValueVO> baseAttrs = spuInfoVO.getBaseAttrs();
+        if (!CollectionUtils.isEmpty(baseAttrs)) {
+            List<ProductAttrValueEntity> collect = baseAttrs.stream().map(productAttrValueVO -> {
+                productAttrValueVO.setSpuId(spuId);
+                productAttrValueVO.setAttrSort(0);
+                productAttrValueVO.setQuickShow(0);
+                return productAttrValueVO;
+            }).collect(Collectors.toList());
+            this.productAttrValueService.saveBatch(collect);
+        }
+    }
+
+
+    public Long saveSpuInfo(SpuInfoVO spuInfoVO) {
+        spuInfoVO.setPublishStatus(1);//默认是上架
+        spuInfoVO.setCreateTime(new Date());
+        spuInfoVO.setUodateTime(spuInfoVO.getCreateTime());
+        this.save(spuInfoVO);
+        return spuInfoVO.getId();
     }
 
 }
