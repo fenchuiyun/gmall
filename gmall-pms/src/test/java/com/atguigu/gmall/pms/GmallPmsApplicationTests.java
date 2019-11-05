@@ -2,6 +2,8 @@ package com.atguigu.gmall.pms;
 
 import com.atguigu.gmall.pms.dao.BrandDao;
 import com.atguigu.gmall.pms.entity.BrandEntity;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,18 +39,24 @@ class GmallPmsApplicationTests {
                         System.out.println(map);
             };
         }.start();
+
     }
 
     @Test
     void test(){
-        BrandEntity brandEntity = new BrandEntity();
-        brandEntity.setDescript("尚硅谷真好");
-        brandEntity.setFirstLetter("S");
-        brandEntity.setLogo("www.baidu.com/log.gif");
-        brandEntity.setName("尚硅谷");
-        brandEntity.setShowStatus(0);
-        brandEntity.setSort(1);
-        this.brandDao.insert(brandEntity);
+        new User("fenchuiyun","xjq");
     }
 
+    @Test
+    void test111(){
+
+    }
+
+}
+
+@Data
+@AllArgsConstructor
+class User{
+    String namae;
+    String id;
 }
