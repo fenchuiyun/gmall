@@ -2,6 +2,7 @@ package com.atguigu.gmall.pms.controller;
 
 import java.io.FileNotFoundException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 
@@ -50,6 +51,16 @@ public class SpuInfoController {
         PageVo page = this.spuInfoService.querySpuInfo(condition,catId);
         return Resp.ok(page);
     }
+
+    @ApiOperation("分页查询(排序)")
+    @PostMapping("/list")
+    @PreAuthorize("hasAuthority('pms:spuinfo:list')")
+    public Resp<List<SpuInfoEntity>> querySpuPage(@RequestBody QueryCondition queryCondition) {
+        PageVo page = spuInfoService.queryPage(queryCondition);
+        System.out.println(page.getList());
+        return Resp.ok((List<SpuInfoEntity>)page.getList());
+    }
+
 
     /**
      * 列表

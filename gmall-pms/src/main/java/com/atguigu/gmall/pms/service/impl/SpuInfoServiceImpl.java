@@ -11,6 +11,7 @@ import com.atguigu.gmall.pms.service.*;
 import com.atguigu.gmall.pms.vo.ProductAttrValueVO;
 import com.atguigu.gmall.pms.vo.SkuInfoVO;
 import com.atguigu.gmall.pms.vo.SpuInfoVO;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -88,7 +89,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
     @Autowired
     private SpuInfoDescService spuInfoDescService;
 
-    @Transactional(rollbackFor = FileNotFoundException.class,noRollbackFor = ArithmeticException.class,timeout = 3)
+    @GlobalTransactional
     @Override
     public void saveSpuInfoVO(SpuInfoVO spuInfoVO) throws FileNotFoundException, InterruptedException {
         //1.保存spu相关
@@ -100,7 +101,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         spuInfoDescService.saveSpuDesc(spuInfoVO, spuId);
         TimeUnit.SECONDS.sleep(4);
         //int i = 1/0;
-        new FileInputStream(new File("xxx"));
+      //  new FileInputStream(new File("xxx"));
         //1.3. 保存spu的规格参数信息
         saveBaseAttr(spuInfoVO, spuId);
 

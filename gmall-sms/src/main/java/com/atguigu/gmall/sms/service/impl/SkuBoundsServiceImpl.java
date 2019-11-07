@@ -22,6 +22,7 @@ import com.atguigu.core.bean.QueryCondition;
 import com.atguigu.gmall.sms.dao.SkuBoundsDao;
 import com.atguigu.gmall.sms.entity.SkuBoundsEntity;
 import com.atguigu.gmall.sms.service.SkuBoundsService;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 
@@ -44,6 +45,7 @@ public class SkuBoundsServiceImpl extends ServiceImpl<SkuBoundsDao, SkuBoundsEnt
     @Autowired
     private SkuLadderDao skuLadderDao;
 
+    @Transactional
     @Override
     public void saveSkuSaleInfo(SkuSaleDTO skuSaleDTO) {
         //3.1.积分优惠
@@ -52,7 +54,7 @@ public class SkuBoundsServiceImpl extends ServiceImpl<SkuBoundsDao, SkuBoundsEnt
         //数据库保存的是整数0-15,页面绑定是0000-1111
         List<Integer> work = skuSaleDTO.getWork();
         if (!CollectionUtils.isEmpty(work)){
-            skuBoundsEntity.setWork(work.get(0)<<3+work.get(1)<<2+work.get(2)<<1+work.get(3));
+            skuBoundsEntity.setWork(work.get(0)*8+work.get(1)*4+work.get(2)*2+work.get(3));
         }
         this.save(skuBoundsEntity);
 
